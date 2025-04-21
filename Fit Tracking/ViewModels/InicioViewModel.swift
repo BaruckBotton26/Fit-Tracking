@@ -8,20 +8,33 @@
 import Foundation
 import AVFoundation
 
-class InicioViewModel:ObservableObject{
+class InicioViewModel: ObservableObject {
     @Published var puedeNavegar = false
-    
-    func solicitarPermisoCamara(){
+    @Published var mostrarAlerta = false
+
+    func solicitarPermisoCamara() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
+           
             puedeNavegar = true
-            AVCaptureDevice.requestAccess(for: .video) { (acceso) in
+
+        case .notDetermined:
+            // 🔥 Aún no se ha pedido permiso, pedirlo ahora
+            AVCaptureDevice.requestAccess(for: .video) { acceso in
                 DispatchQueue.main.async {
-                    self.puedeNavegar = acceso
+                    if acceso {
+                        self.puedeNavegar = true
+                    } else {
+                        self.mostrarAlerta = true
+                    }
                 }
             }
-        default:
-            puedeNavegar = false
+
+        case .denied, .restricted:
+            mostrarAlerta = true
+
+        @unknown default:
+            mostrarAlerta = true
         }
     }
 }

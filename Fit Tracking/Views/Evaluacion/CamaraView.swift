@@ -8,8 +8,16 @@
 import SwiftUI
 
 struct CamaraView: UIViewControllerRepresentable {
+    var onStart: (CameraPreviewViewController) -> Void
+    var onVideoSaved: (URL) -> Void
+    
     func makeUIViewController(context: Context) -> CameraPreviewViewController{
-        return CameraPreviewViewController()
+        let controller = CameraPreviewViewController()
+        controller.videoGrabado = onVideoSaved
+        DispatchQueue.main.async{
+            onStart(controller)
+        }
+        return controller
     }
     func updateUIViewController(_ uiViewController: CameraPreviewViewController, context: Context) {}
     }

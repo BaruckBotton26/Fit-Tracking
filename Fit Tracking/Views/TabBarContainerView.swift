@@ -20,7 +20,7 @@ struct TabBarContainerView: View {
                     Image(systemName: "video")
                     Text("evaluacion")
                 }
-            FeedbackView()
+            FeedbackView(videoURL: URL(fileURLWithPath: ""))
                 .tabItem{
                     Image(systemName: "person.fill")
                     Text("feedback")
