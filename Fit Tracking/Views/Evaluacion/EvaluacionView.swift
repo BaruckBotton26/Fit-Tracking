@@ -11,9 +11,10 @@ struct EvaluacionView: View {
     @State private var cameraController: CameraPreviewViewController?
     @State private var navigateToFeedback = false
     @State private var recordedVideoURL: URL?
+    @State private var isRecording = false // 🔥 Nuevo estado para saber si estás grabando
 
     var body: some View {
-        NavigationStack { // ✅ Asegúrate de envolver todo en NavigationStack
+        NavigationStack {
             ZStack(alignment: .top) {
                 Color.white.ignoresSafeArea()
                 
@@ -24,20 +25,22 @@ struct EvaluacionView: View {
                         },
                         onVideoSaved: { videoURL in
                             self.recordedVideoURL = videoURL
-                            self.navigateToFeedback = true  // 🔥 Aquí sí navegas cuando guardas
-                        }
-                    )
+                            self.navigateToFeedback = true // 🔥 Navegar solo si realmente ya se guardó
+                                                    }
+                                                )
+                            
                     .frame(height: 400)
                     .cornerRadius(12)
                     .clipped()
                     
-                    Text("Realizando Análisis en tiempo real...")
+                    Text(isRecording ? "Grabando ejercicio..." : "Listo para grabar")
                         .font(.title3)
                         .bold()
                         .frame(maxWidth: .infinity, alignment: .center)
                     
                     Button(action: {
                         cameraController?.startRecording()
+                        isRecording = true // 🔵 Cambia estado
                     }) {
                         Text("Iniciar Grabación")
                             .padding()
@@ -45,10 +48,12 @@ struct EvaluacionView: View {
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
+                    .disabled(isRecording) // 🔥 Bloquea botón si ya estás grabando
                     
                     Button(action: {
                         cameraController?.stopRecording()
-                        // 🔥 Aquí solo detienes grabación
+                        isRecording = false // 🔵 Vuelve a estado normal
+                        // 🔥 Esperas que onVideoSaved active navigateToFeedback
                     }) {
                         HStack(spacing: 30) {
                             Image(systemName: "doc.text")
@@ -68,17 +73,21 @@ struct EvaluacionView: View {
                                 .stroke(Color.blue, lineWidth: 2)
                         )
                     }
+                    .disabled(!isRecording) // 🔥 Solo puedes terminar si empezaste a grabar
                 }
                 .padding(.horizontal, 20)
                 .padding(.top)
             }
             .navigationDestination(isPresented: $navigateToFeedback) {
-                FeedbackView(videoURL: recordedVideoURL ?? URL(fileURLWithPath: ""))
+                if let videoURL = recordedVideoURL {
+                    FeedbackView(videoURL: videoURL)
+                } else {
+                    Text("Error: No se encontró el video.") // 🔥 Seguridad adicional
+                }
             }
         }
     }
 }
-
 #Preview {
     EvaluacionView()
 }

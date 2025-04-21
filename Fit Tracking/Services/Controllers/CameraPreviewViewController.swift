@@ -38,12 +38,14 @@ class CameraPreviewViewController: UIViewController {
         previewLayer = AVCaptureVideoPreviewLayer(session: CaptureSession)
         previewLayer?.videoGravity = .resizeAspectFill
         previewLayer?.frame = view.bounds
-        if let previewLayer = previewLayer{
+        if let previewLayer = previewLayer {
             view.layer.addSublayer(previewLayer)
-
         }
         
-        CaptureSession.startRunning()
+        // Iniciar la sesión en un hilo en segundo plano
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.CaptureSession.startRunning()
+        }
     }
     func startRecording(){
         let outputPath = NSTemporaryDirectory() + UUID().uuidString + ".mov"
@@ -59,6 +61,9 @@ extension CameraPreviewViewController: AVCaptureFileOutputRecordingDelegate{
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?){
         if error == nil{
             videoGrabado?(outputFileURL)
+        }else{
+            print("Error al grabar video: \(String(describing: error))")
+
         }
     }
 }

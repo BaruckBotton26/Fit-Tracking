@@ -10,8 +10,13 @@ import AVKit
 
 struct FeedbackView: View {
     var videoURL: URL
+    @State private var Keypoints: [[String: Float]] = []
+    @StateObject private var viewModel = FeedbackViewModel()
     @State private var player: AVPlayer?
     
+    init(videoURL: URL) {
+        self.videoURL = videoURL
+    }
     var body: some View {
         NavigationView{
             ScrollView{
@@ -19,16 +24,25 @@ struct FeedbackView: View {
                     Color.white.ignoresSafeArea()
                     
                     VStack(spacing: 30) {
-                        if let player = player{
-                            VideoPlayerCustom(player:player)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 400)
-                                .aspectRatio(16/9,contentMode: .fit)
-                                .cornerRadius(12)
-                                .onAppear {
-                                    player.play()
-                                }
+                        if let player = player {
+                            ZStack {
+                                VideoPlayer(player: player)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 400)
+                                    .aspectRatio(16/9, contentMode: .fit)
+                                    .cornerRadius(12)
+                                    .onAppear {
+                                        player.play()
+                                        print("🔵 videoURL recibido en FeedbackView: \(videoURL)")
+
+                                    }
+                                
+                                PoseOverlayView(keypoints: viewModel.keypoints)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 400)
+                            }
                         }
+                        
                         Text("Análisis del ejercicio:")
                             .font(.headline)
                             .padding(.horizontal, 16)
@@ -85,16 +99,19 @@ struct FeedbackView: View {
                 .padding(.top)
                 .onAppear{
                     self.player = AVPlayer(url: videoURL)
-                    
+                    viewModel.configurePlayer(with: videoURL)
+                    viewModel.startFrameProcessing(with: self.player)
+                                       
                     NotificationCenter.default.addObserver(
-                            forName: .AVPlayerItemDidPlayToEndTime,
-                            object: self.player?.currentItem,
-                            queue: .main
-                        ) { _ in
-                            self.player?.seek(to: .zero)
-                            self.player?.play()
-                        }
+                    forName: .AVPlayerItemDidPlayToEndTime,
+                    object: self.player?.currentItem,
+                    queue: .main
+                    ) { _ in
+                    self.player?.seek(to: .zero)
+                    self.player?.play()
+                    viewModel.startFrameProcessing(with: player)
                     }
+                }
             }
         }
     }
